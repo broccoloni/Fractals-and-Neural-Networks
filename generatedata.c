@@ -1,5 +1,5 @@
 /*Created by:    Liam Graham
- * Last updated: Jun. 2020
+ * Last updated: Jan 2021
  *
  * FILE NAME: generatedata.c
  * 
@@ -20,11 +20,10 @@ int main(int argc, char *argv[]){
     int i, j, numpoints, numfuncs, numrows, numtogenerate, tmpint;
     int pcomp = 0; 
     double window[4];
-    char filename[50], dirname[50], fracname[124],filepath[100],tmp[50];
+    char dirname[50], fracname[50],filepath[100],tmp[50];
     FILE *fp;
-    struct Fractal *frac;
     srand(time(NULL));
-    
+	
     fprintf(stdout, "How many fractals would you like to generate: ");
     scanf("%d", &numtogenerate);
     fprintf(stdout, "\n");
@@ -34,7 +33,6 @@ int main(int argc, char *argv[]){
     
     fprintf(stdout, "\nHow many points would you like to plot for each fractal: ");
     scanf("%d", &numpoints);
-    strcpy(filepath, dirname); 
     
     fprintf(stdout, "\nHow many functions in each IFS: ");
     scanf("%d", &numfuncs);
@@ -43,9 +41,8 @@ int main(int argc, char *argv[]){
     scanf("%s", tmp);
     
     dstrtovec(tmp, window, &tmpint);
-    sprintf(filename, "fracdata.dat");
-    sprintf(filepath, "%s%s", dirname, filename);
-    
+    sprintf(filepath, "./%s/fracdata.dat", dirname);
+
     if ((fp = fopen(filepath, "r")) == NULL){
         numrows = 0;
     }
@@ -56,39 +53,30 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Error, you must create the directory first\n");
         exit(1);
     }
+
     fprintf(stdout, "Generating fractals %d to %d\n", numrows, numrows+numtogenerate);
     for (i = 0; i < numtogenerate; i++){
-        frac = makerandfrac(numpoints, numfuncs, window);
+    	struct Fractal *frac = makerandfrac(numpoints, numfuncs, window, 1);
         stddev(frac);
         dimension(frac);
-        int params = 0;
         /* fractal number, numfuncs, numpoints, numb, avgx, avgy, stddevx, stddevy, dimension, genome */
-        fprintf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%.15lf\t%.15lf\t%.15lf\t",
-                numrows+i, frac->numfuncs, frac->numpoints, frac->numb, 
-                frac->avgx, frac->avgy, frac->stddevx, frac->stddevy, frac -> dimension);
-        for (j = 0; j < frac -> numfuncs; j++){
-            for (int k = 0; k < 4; k++){
-                fprintf(fp, "%.15lf\t", frac -> genome[0][params + k]);
-            }
-            params += 4;
+        fprintf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%.15lf\t%.15lf\t%.15lf\t", numrows+i, frac->numfuncs, frac->numpoints, frac->numb, frac->avgx, frac->avgy, frac->stddevx, frac->stddevy, frac -> dimension);
+        for (j = 0; j < 4 * frac -> numfuncs; j++){
+	    fprintf(fp, "%.15lf\t", frac -> genome[0][j]);
         }
-        params = 0;
-        for (j = 0; j < frac -> numfuncs; j++){
-            for (int k = 0; k < 2; k++){
-                fprintf(fp, "%.15lf\t", frac -> genome[1][params + k]);
-            }
-            params += 2;
+        for (j = 0; j < 2 * frac -> numfuncs; j++){
+            fprintf(fp, "%.15lf\t", frac -> genome[1][j]);
         }
-        for (j = 0; j < frac -> numfuncs; j++){
+	for (j = 0; j < frac -> numfuncs; j++){
             fprintf(fp, "%.15lf\t", frac -> genome[2][j]);
         }
         for (j = 0; j < frac -> numfuncs-1; j++){
             fprintf(fp, "%.15lf\t", frac -> genome[3][j]);
         }
         fprintf(fp, "%.15lf\n", frac -> genome[3][frac -> numfuncs -1]);
-        sprintf(fracname, "%sfrac%d.png", dirname, numrows+i);
+        sprintf(fracname, "%s/frac%d.png", dirname, numrows+i);
         WritePNG(fracname, frac);
-        freefrac(frac);
+    	freefrac(frac);
         if (numtogenerate >= 100 && (i%((int)(numtogenerate/100.)) == 0)){
             pcomp += 1;
             if (pcomp < 10){
@@ -107,6 +95,3 @@ int main(int argc, char *argv[]){
     fclose(fp);
     exit(0);
 }
-
-
-

@@ -14,7 +14,6 @@ void dstrtovec(char *str, double *vector, int *len){
 	}
 }
 
-
 void istrtovec(char *str, int *vector, int *len){
         char *ptr;
         *len = 0;
@@ -41,6 +40,19 @@ int * ivecmem(int m) {
         int *vec;
         vec = (int *)malloc(m * sizeof(int));
         return vec;
+}
+
+double * dvecmem(int m) {
+        double *vec;
+        vec = (double *)malloc(m * sizeof(double));
+        return vec;
+}
+
+void dvecout(int n, double *vec){
+	for (int i = 0; i < n; i++){
+		fprintf(stdout, "%.4lf\t", vec[i]);
+	}
+	fprintf(stdout, "\n");
 }
 
 /* Sorting function for ordergenome in Fractals.c */
@@ -92,3 +104,12 @@ void dfreemat(int m, double **mat){
 	}
 	free(mat);
 }
+
+void ifreemat(int m, int **mat){
+	for (int i = 0; i < m; i++){
+		free(mat[i]);
+	}
+	free(mat);
+}
+
+

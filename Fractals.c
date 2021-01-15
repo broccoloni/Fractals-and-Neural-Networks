@@ -115,41 +115,33 @@ void ordergenome(int numfuncs, double **genome){
     * fractal genome. This is done by sorting rows of a
     * matrix where each row represents a function
     */
-    int i,j, curind, indf = 0;
+    int i,j;
     double **genomefuncs = dmatmem(numfuncs, 8);
     /* Setting values in the genomefuncs matrix */
     for (i = 0; i < numfuncs; i++){
-        genomefuncs[i][0] = genome[3][i]; //place spectral radius first
-        curind = 1;
-        for (j = 0; j < 4; j++){
-            genomefuncs[i][curind] = genome[0][indf + j];
-            curind++;
-        }
-        for (j = 0; j < 2; j++){
-            genomefuncs[i][curind] = genome[1][indf + j];
-            curind++;
-        }
-        genomefuncs[i][curind] = genome[2][i];
+    	genomefuncs[i][0] = genome[3][i];
+    	genomefuncs[i][1] = genome[0][4*i+0];
+    	genomefuncs[i][2] = genome[0][4*i+1];
+    	genomefuncs[i][3] = genome[0][4*i+2];
+    	genomefuncs[i][4] = genome[0][4*i+3];
+    	genomefuncs[i][5] = genome[1][2*i+0];
+    	genomefuncs[i][6] = genome[1][2*i+1];
+    	genomefuncs[i][7] = genome[2][i];
     }
     dsortmatrows(numfuncs, 0, genomefuncs);
-
     /* Converting back to genome of the fractal */
+
     for (i = 0; i < numfuncs; i++){
+        for (j = 0; j < 4; j++){
+	    genome[0][4*i+j] = genomefuncs[i][j+1];
+	}
+	for (j = 0; j < 2; j++){
+            genome[1][2*i+j] = genomefuncs[i][j+5];
+	}
+        genome[2][i] = genomefuncs[i][7];
         genome[3][i] = genomefuncs[i][0];
     }
-    for (i = 0; i < numfuncs; i++){
-        curind = 1;
-        for (j = 0; j < 4; j++){
-            genome[0][indf + j] = genomefuncs[i][curind];
-            curind++;
-        }
-        for (j = 0; j < 2; j++){
-            genome[1][indf + j] = genomefuncs[i][curind];
-            curind++;
-        }
-        genome[2][i] = genomefuncs[i][curind];
-    }
-    dfreemat(numfuncs, genomefuncs); 
+    dfreemat(numfuncs, genomefuncs);
     return;
 }
 
@@ -186,7 +178,8 @@ double validatefunc(double a, double b, double c, double d){
     else {
         double abslambda1 = fabs((Tr + sqrt(discr))*0.5);
     	double abslambda2 = fabs((Tr - sqrt(discr))*0.5);
-	if (abslambda1 >= abslambda2) return abslambda1;
+	if (abslambda1 >= 1 || abslambda2 >= 1) return 0;
+	else if (abslambda1 >= abslambda2) return abslambda1;
 	else return abslambda2;
     }
 }
@@ -200,19 +193,16 @@ double ** mallocgenome(int numfuncs){
      * genome[3] is the spectral radius of the matrix in the function
      */
     double **genome;
-    if ((genome = (double **)malloc(5*sizeof(double *))) == NULL){
+    if ((genome = (double **)malloc(4*sizeof(double *))) == NULL){
         fprintf(stderr, "Malloc failed (generate genome)\n");
         exit(1);
     }
     if (((genome[0] = (double *)malloc(4*numfuncs*sizeof(double))) == NULL)||
         ((genome[1] = (double *)malloc(2*numfuncs*sizeof(double))) == NULL)||
-        ((genome[2] = (double *)malloc(numfuncs*sizeof(double))) == NULL)){
+        ((genome[2] = (double *)malloc(numfuncs*sizeof(double))) == NULL)||
+	((genome[3] = (double *)malloc(numfuncs*sizeof(double))) == NULL)){
             fprintf(stderr, "Malloc failed (initializefrac)\n");
             exit(1);
-    }
-    if ((genome[3] = (double *)malloc(numfuncs*sizeof(double))) == NULL){
-        fprintf(stderr, "Malloc failed (initializefrac 3)\n");
-        exit(1);
     }
     return genome;
 }
@@ -276,7 +266,7 @@ void initializefrac(struct Fractal *frac, int numfuncs, int numpoints){
     return;
 }
 
-double generatepoints(struct Fractal *frac){
+void generatepoints(struct Fractal *frac, double *extrema){
     /* This function generates the points corresponding 
      * to a fractal. That is, it randomly picks a function
      * in the fractal and uses it to transform a random 
@@ -289,11 +279,12 @@ double generatepoints(struct Fractal *frac){
     int i,j;
     int funcnum;
     double p, num;
-    double max = 0;
     double x = (double)rand()/RAND_MAX; 
     double y = (double)rand()/RAND_MAX;
     double maxx = 0;
+    double minx = 0;
     double maxy = 0;
+    double miny = 0;
     for (i = 0; i < 100; i++){
         funcnum = rand()%frac -> numfuncs;
         func(&x, &y, frac -> genome, funcnum);
@@ -312,36 +303,43 @@ double generatepoints(struct Fractal *frac){
                 //note: colours get put to pixels in generatebm (below)
                 //      and colours chosen are in PNGio.c
                 frac -> colours[i] = funcnum;
-                if (fabs(x) > max) max = fabs(x);
-                if (fabs(y) > max) max = fabs(y);
-                if (fabs(x) > maxx) maxx = fabs(x);
-                if (fabs(y) > maxy) maxy = fabs(y);
+		if (i == 0){
+		    maxx = x;
+		    minx = x;
+		    maxy = y;
+		    miny = y;
+		}
+                if (x > maxx) maxx = x;
+                if (x < minx) minx = x;
+                if (y > maxy) maxy = y;
+                if (y < miny) miny = y;
                 break;
             }
             else funcnum ++;
         }
     }
-    return max;
+    extrema[0] = minx;
+    extrema[1] = maxx;
+    extrema[2] = miny;
+    extrema[3] = maxy;
 }
 
-int generatefrac(struct Fractal *frac){
+void generatefrac(struct Fractal *frac, double *extrema){
     /* This function calls the generate points function.
      * The commented section is used to resized the affine
      * fractals if they were too large to fit into the -1 to 1 
      * square, however, this is no longer used as non-affine
      * IFSs are not as simple to resize
      */
-    return generatepoints(frac);
+    generatepoints(frac, extrema);
 }
 
-int * pointtocoord(double x, double y, double minx, double maxx, double miny, double maxy){
+void pointtocoord(int *coords, double x, double y, double minx, double maxx, double miny, double maxy){
     /* This function is used to convert a point (x,y) to pixel coordinates
      * on a screen with viewing region [minx,maxx]x[miny,maxy]
      */
-    int *coords = ivecmem(2);
     coords[0] = (int)(WIDTH/2  + WIDTH/2  * ((x - minx)/(maxx - minx)*2 - 1));
     coords[1] = (int)(HEIGHT/2 - HEIGHT/2 * ((y - miny)/(maxy - miny)*2 - 1));
-    return coords;
 }
 
 void generatematrix(struct Fractal *frac, double *window){
@@ -365,9 +363,9 @@ void generatematrix(struct Fractal *frac, double *window){
     int numb = 0;
     int avgx = 0;
     int avgy = 0;
-    int *coords;
+    int *coords = ivecmem(2);
     for (i = 0; i < frac -> numpoints; i++){
-	coords = pointtocoord(frac ->xs[i], frac->ys[i], window[0], 
+	pointtocoord(coords, frac ->xs[i], frac->ys[i], window[0], 
                               window[1], window[2], window[3]);
         x = coords[0];
         y = coords[1];
@@ -391,6 +389,7 @@ void generatematrix(struct Fractal *frac, double *window){
     frac -> avgx = avgx/(int)numb;
     frac -> avgy = avgy/(int)numb;
     frac -> numb = numb;
+    free(coords);
     return;
 }
 
@@ -406,13 +405,12 @@ void freegenome(struct Fractal *frac){
 
 void freefrac(struct Fractal *frac){
     /* This function frees the memory of a fractal structure */
-    for (int i = 0; i < HEIGHT; i++){
-        free(frac -> bm[i]);
-    }
-    free(frac -> bm);
     freegenome(frac);
+    ifreemat(HEIGHT, frac -> bm);
     free(frac -> xs);
     free(frac -> ys);
+    free(frac -> colours);
+    free(frac);
     return;
 }
 

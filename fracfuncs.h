@@ -4,6 +4,6 @@
  * FILE NAME: fracfuncs.h
  */
 struct Fractal;
-struct Fractal * makerandfrac(int numpoints, int numfuncs, double *window);
+struct Fractal * makerandfrac(int numpoints, int numfuncs, double *window, int cutoff);
 void dimension(struct Fractal *frac);
 void stddev(struct Fractal *frac);

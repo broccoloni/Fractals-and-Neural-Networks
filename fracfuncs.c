@@ -14,21 +14,32 @@
 #include <time.h>
 #include "Fractals.h"
 #include "fracfuncs.h"
+#include "vecio.h"
 
-struct Fractal * makerandfrac(int numpoints, int numfuncs, double *window){
+struct Fractal * makerandfrac(int numpoints, int numfuncs, double *window, int cutoff){
     /* This function generates a random fractal. See Fractals.c -> generategenome() for an 
      * explanation of the input parameters
-     */
+     */ 
     struct Fractal *frac;
     if ((frac = (struct Fractal *)malloc(sizeof(struct Fractal))) == NULL){
-                fprintf(stderr, "Malloc failed. (makerandfrac)\n");
-                exit(1);
-        }
+        fprintf(stderr, "Malloc failed. (makerandfrac)\n");
+        exit(1);
+    }
     initializefrac(frac, numfuncs, numpoints);
-    //frac -> coloured = 0;
-    generategenome(frac);
-    generatefrac(frac);
+    double *extrema = dvecmem(4);
+    int pass = 1;
+    while (pass != 0){
+	    generategenome(frac);
+	    generatefrac(frac, extrema);
+	    if (cutoff == 0) pass = 0;
+	    if (extrema[0] > window[0] && extrema[1] < window[1]){
+		if (extrema[2] > window[2] && extrema[3] < window[3]){
+		    pass = 0;
+		}
+	    }
+    }
     generatematrix(frac, window);
+    free(extrema);
     return frac;
 }
 
