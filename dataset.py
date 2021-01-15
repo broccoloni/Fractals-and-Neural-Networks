@@ -72,7 +72,8 @@ class ToTensor(object):
     def __call__(self, sample, invert):
         data = torch.Tensor(sample['data'])
         image = sample['image']
-        image = (torch.Tensor(image)).reshape(-1, 640)
+        image = (torch.Tensor(image)).reshape(3,640,640)
+        image = image[0]
         image.unsqueeze_(0)
         
         if (invert != 0):

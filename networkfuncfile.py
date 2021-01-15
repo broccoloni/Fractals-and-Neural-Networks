@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
-from Networks import * # The file containing the network class definition
+from networkfile import * # The file containing the network class definition
 import torchvision
 from PIL import Image
 import os
@@ -62,7 +62,7 @@ def train(model, train_loader, device, optimizer, criterion, printpct = 5, graph
         if (i+1) % int(graphpct*total_step/100) == 0:
             # Note: the division by 2500 is due to a dataset of size 250,000
             #       with a step size of 100
-            xs = np.linspace(0, len(model.module.losses)/2500, len(model.module.losses))
+            xs = np.linspace(0, len(model.module.losses)/1200, len(model.module.losses))
             plt.plot(xs, model.module.losses)
             plt.ylim(0,graphheight)
             plt.grid(True)
@@ -150,7 +150,7 @@ def save(model, learning_rate, optimizer, device, filename):
     torch.save(state, filename)
     model.to(device)
     
-def load(filename device, chunks, ksizes, psizes, scale_lr = 1):
+def load(filename, device, chunks, ksizes, psizes, scale_lr = 1):
     # This function can be used to load a neural network
     #
     # INPUTS:

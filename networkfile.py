@@ -54,11 +54,11 @@ class block(nn.Module):
     #     reduce:   the number of feature maps of the middle layer
     #     ksize:    the size of the kernel in the middel layer
         
-    def __init__(self, channels, reduce, ksize):
+    def __init__(self, channels, reduced, ksize):
         super(block, self).__init__()
-        self.conv1 = convbr(channels, reduce, kernel_size = 1)
-        self.conv2 = convbr(reduce, reduce, kernel_size = ksize, padding = int(ksize/2))
-        self.conv3 = convbr(reduce, channels, kernel_size = 1)
+        self.conv1 = convbr(channels, reduced, kernel_size = 1)
+        self.conv2 = convbr(reduced, reduced, kernel_size = ksize, padding = int(ksize/2))
+        self.conv3 = convbr(reduced, channels, kernel_size = 1)
     
     #Passing the data forward through the block
     #
@@ -106,48 +106,49 @@ class FracNet(nn.Module):
         self.total_epochs = 0
         self.num_classes = num_classes
         num_maps = [8,16,32,64,128,256,512]
+        reduce_maps = [8,16,16,32,32,64,128]
         
         #the dimensions after each chunk:
         #640 x 640 
-        self.pool0 = convbr(1, num_maps[0], kernel_size = psize[0], stride = 2, padding = int(psize[0]/2)-1)
-        #320 x 320
-        self.chunk0 = self.make_chunk(num_maps[0], chunks[0], int(num_maps[0]/4),ksize[0])
+        self.pool0 = convbr(1, num_maps[0], kernel_size = psize[0], stride = 2, padding = 0)
+        #316 x 316
+        self.chunk0 = self.make_chunk(num_maps[0], chunks[0], reduce_maps[0], ksize[0])
         
-        #320 x 320
-        self.pool1 = convbr(num_maps[0], num_maps[1], kernel_size = psize[1], stride = 2, padding = int(psize[1]/2)-1)
-        #160 x 160
-        self.chunk1 = self.make_chunk(num_maps[1], chunks[1], int(num_maps[1]/4),ksize[1])
+        #316 x 316
+        self.pool1 = convbr(num_maps[0], num_maps[1], kernel_size = psize[1], stride = 2, padding = 0)
+        #154 x 154
+        self.chunk1 = self.make_chunk(num_maps[1], chunks[1], reduce_maps[1],ksize[1])
         
-        #160 x 160
-        self.pool2 = convbr(num_maps[1], num_maps[2], kernel_size = psize[2], stride = 2, padding = int(psize[2]/2)-1)
-        #80 x 80
-        self.chunk2 = self.make_chunk(num_maps[2], chunks[2],int(num_maps[2]/4),ksize[2])
+        #154 x 154
+        self.pool2 = convbr(num_maps[1], num_maps[2], kernel_size = psize[2], stride = 2, padding = 0)
+        #74 x 74
+        self.chunk2 = self.make_chunk(num_maps[2], chunks[2],reduce_maps[2],ksize[2])
         
-        #80 x 80
-        self.pool3 = convbr(num_maps[2], num_maps[3], kernel_size = psize[3], stride = 2, padding = int(psize[3]/2)-1)
-        #40 x 40
-        self.chunk3 = self.make_chunk(num_maps[3], chunks[3], int(num_maps[3]/4),ksize[3])
+        #74 x 74
+        self.pool3 = convbr(num_maps[2], num_maps[3], kernel_size = psize[3], stride = 2, padding = 0)
+        #34 x 34
+        self.chunk3 = self.make_chunk(num_maps[3], chunks[3], reduce_maps[3],ksize[3])
         
-        #40 x 40
-        self.pool4 = convbr(num_maps[3], num_maps[4], kernel_size = psize[4], stride = 2, padding = int(psize[4]/2)-1)
-        #20 x 20
-        self.chunk4 = self.make_chunk(num_maps[4], chunks[4], int(num_maps[4]/4),ksize[4])
+        #34 x 34
+        self.pool4 = convbr(num_maps[3], num_maps[4], kernel_size = psize[4], stride = 2, padding = 0)
+        #16 x 16
+        self.chunk4 = self.make_chunk(num_maps[4], chunks[4], reduce_maps[4],ksize[4])
         
-        #20 x 20
-        self.pool5 = convbr(num_maps[4], num_maps[5], kernel_size = psize[5], stride = 2, padding = int(psize[5]/2)-1)
-        #10 x 10
-        self.chunk5 = self.make_chunk(num_maps[5], chunks[5], int(num_maps[5]/4),ksize[5])
+        #16 x 16
+        self.pool5 = convbr(num_maps[4], num_maps[5], kernel_size = psize[5], stride = 2, padding = 0)
+        #7 x 7
+        self.chunk5 = self.make_chunk(num_maps[5], chunks[5], reduce_maps[5],ksize[5])
         
-        #10 x 10
-        self.pool6 = convbr(num_maps[5], num_maps[6], kernel_size = psize[6], stride = 2, padding = int(psize[6]/2)-1)
-        #5 x 5
-        self.chunk6 = self.make_chunk(num_maps[6], chunks[6], int(num_maps[6]/4),ksize[6])
+        #7 x 7
+        self.pool6 = convbr(num_maps[5], num_maps[6], kernel_size = psize[6], stride = 2, padding = 0)
+        #3 x 3
+        self.chunk6 = self.make_chunk(num_maps[6], chunks[6], reduce_maps[6],ksize[6])
         
-        self.fc0 = fcbrd(num_maps[6] * 5 * 5, 1000, dropout = dropout)
+        self.fc0 = fcbrd(num_maps[6] * 3 * 3, 1000, dropout = dropout)
         self.fcout = nn.Linear(1000, num_classes)
         
     
-    def make_chunk(self, channels, chunks, reduce, ksize):
+    def make_chunk(self, channels, chunks, reduced, ksize):
         # This class function creates the chunks in the network by
         # using the block class above
         #
@@ -159,7 +160,7 @@ class FracNet(nn.Module):
         #     ksize:    the size of the kernel in the middel layer of each block
         layers = []
         for i in range(chunks):
-            layers.append(block(channels, reduce, ksize))
+            layers.append(block(channels, reduced, ksize))
         return nn.Sequential(*layers)
     
     def forward(self, x):
@@ -191,8 +192,9 @@ class FracNet(nn.Module):
         
         out = self.pool6(out)
         out = self.chunk6(out)
-        
+
         out = out.reshape(out.size(0), -1)
+        
         out = self.fc0(out)
         out = self.fcout(out)
         return out

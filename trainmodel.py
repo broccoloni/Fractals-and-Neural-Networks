@@ -11,12 +11,12 @@ from PIL import Image
 import torch.utils.data as data_utils
 import matplotlib.pyplot as plt
 import numpy as np
-from FracDataset import FractalDataset, ToTensor # The file containing the Fractal dataset class definition
-from Networks import *       # The file containing the network class definition
-from Networkfuncs import *   # The file containing the network function such as train, test, etc.
+from dataset import FractalDataset, ToTensor # The file containing the Fractal dataset class definition
+from networkfile import *       # The file containing the network class definition
+from networkfuncfile import *   # The file containing the network function such as train, test, etc.
 
 if __name__ == "__main__":
-    batch_size  = 100
+    batch_size  = 32
     num_workers = 6    # The number of cpus used to load data
 
     # Loading the Fractal dataset
@@ -29,29 +29,31 @@ if __name__ == "__main__":
     # and the test set from 
     # /home/lgraha07/scratch/TestFraclibnf2/
     
-    dirname = "Fraclibnf2"
-    testdirname = "TestFraclibnf2"
-    validdirname = "ValidFraclibnf2"
+    numfuncs = 2
+    traindir = "train/nf{}/".format(numfuncs)
+    testdir = "test/nf{}/".format(numfuncs)
+    validdir = "valid/nf{}/".format(numfuncs)
 
-    path = "/home/lgraha07/scratch/"
+    path = "/home/lgraha07/scratch/Paper2021/data/"
 
-    dirpath = path+dirname
-    testdirpath = path+testdirname
-    validdirpath = path+validdirname
+    trainpath = path+traindir
+    testpath = path+testdir
+    validpath = path+validdir
 
-    filename = "/fracdata.dat"
-    filepath = dirpath+filename
-    testfilepath = testdirpath+filename
-    validfilepath = validdirpath+filename
+    filename = "fracdata.dat"
+    
+    trainfile = trainpath+filename
+    testfile = testpath+filename
+    validfile = validpath+filename
 
-    train_set = FractalDataset(filename = filepath,
-                                root_dir = dirpath,   
+    train_set = FractalDataset(filename = trainfile,
+                                root_dir = trainpath,   
                                 transform = ToTensor())
-    test_set = FractalDataset(filename = testfilepath,
-                               root_dir = testdirpath,
+    test_set = FractalDataset(filename = testfile,
+                               root_dir = testpath,
                                transform = ToTensor())
-    valid_set = FractalDataset(filename = validfilepath,
-                                 root_dir = validdirpath,
+    valid_set = FractalDataset(filename = validfile,
+                                 root_dir = validpath,
                                  transform = ToTensor())
 
     # Put each dataset into a pytorch data loader which divides it into batches
@@ -68,16 +70,22 @@ if __name__ == "__main__":
                                              shuffle = False,
                                              num_workers = num_workers)
 
+    print ("Number of functions: {}".format(numfuncs))
+    print ("Training set:\t{}".format(len(train_set)))
+    print ("Validation set:\t{}".format(len(valid_set)))
+    print ("Testing set:\t{}".format(len(test_set)))
     # Initializations and Hyperparameters
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     num_classes = train_set[0]['data'].size(0)
     dropout = 0
-    learning_rate = 0.0000075
-    chunks = [3,5,7,11,29,23,17]
+    learning_rate = 0.00001
+    chunks = [3,5,7,11,25,19,15]
     ksizes = [3,3,3,3,3,3,3]
-    psizes = [4,4,4,4,4,4,4]
+    psizes = [10,10,8,8,4,4,3]
     betas = (0.9,0.999)
-    num_epochs = 10
+    num_epochs = 2
+           
+    print ("Training {} epochs on device {}".format(num_epochs, device))
     
     # Create the model
     model = FracNet(num_classes, dropout, chunks, ksizes, psizes)
@@ -89,12 +97,13 @@ if __name__ == "__main__":
     # Train, test and save the model. Note: during training it is tested on the validation set
     # Once all training is complete is when it is tested on the test set
     for i in range(num_epochs):
+        print ("Epoch {}/{}".format(i+1, num_epochs))
         train(model, frac_train_loader, device, optimizer, criterion = nn.MSELoss())
-        test(model, frac_val_loader, device, batch_size)
-        modelname = "modelnf2_"+str(i)+".tar"
+        test(model, frac_valid_loader, device, batch_size)
+        modelname = "modelnf{}_{}.tar".format(numfuncs, i)
         save(model, learning_rate, optimizer, device, modelname)
         
     # To go back and load epoch 8 and scale the learning rate by 1/10, we could then run
-    model, optimizer, learning_rate = load("modelnf2_8.tar", device, chunks, ksizes, psizes, scale_lr = 1/10.)
+    model, optimizer, learning_rate = load("modelnf{}_{}.tar".format(numfuncs,8), device, chunks, ksizes, psizes, scale_lr = 1/10.)
     
         

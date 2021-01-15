@@ -17,10 +17,10 @@
 #include "fracfuncs.h"
 
 int main(int argc, char *argv[]){
-    int i, j, numpoints, numfuncs, numrows, numtogenerate, tmpint;
+    int i, j, numpoints, numfuncs, numrows, numtogenerate;
     int pcomp = 0; 
-    double window[4];
-    char dirname[50], fracname[50],filepath[100],tmp[50];
+    double window[4] = {-8,8,-8,8};
+    char dirname[50], fracname[50],filepath[100];
     FILE *fp;
     srand(time(NULL));
 	
@@ -37,10 +37,10 @@ int main(int argc, char *argv[]){
     fprintf(stdout, "\nHow many functions in each IFS: ");
     scanf("%d", &numfuncs);
     
-    fprintf(stdout, "\nEnter a vector representing the viewing window (eg. minx,maxx,miny,maxy): ");
-    scanf("%s", tmp);
-    
-    dstrtovec(tmp, window, &tmpint);
+    //fprintf(stdout, "\nEnter a vector representing the viewing window (eg. minx,maxx,miny,maxy): ");
+    //scanf("%s", tmp);	    
+    //dstrtovec(tmp, window, &tmpint);
+
     sprintf(filepath, "./%s/fracdata.dat", dirname);
 
     if ((fp = fopen(filepath, "r")) == NULL){
