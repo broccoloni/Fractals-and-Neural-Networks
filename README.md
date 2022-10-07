@@ -18,12 +18,21 @@ sets and found that they were akin to fractals with large amounts of functions.
 
 Below is an example of input and output images for:
 
-2-function IFS fractals:
+2-function IFS fractal and it's network-predicted reconstruction:
 
-4-function IFS fractals:
+<img src = "https://user-images.githubusercontent.com/38572823/194652848-7b738dd3-f818-487b-b2bd-6c587881a8de.png" width = "500" height = "250">
 
-6-function IFS fractals:
+4-function IFS fractal and it's network-predicted reconstruction:
 
-8-function IFS fractals:
+<img src = "https://user-images.githubusercontent.com/38572823/194652826-34cc25de-d968-44ac-89f8-20aaf6e2fb30.png" width = "500" height = "250">
+
+6-function IFS fractal and it's network-predicted reconstruction:
+
+<img src = "https://user-images.githubusercontent.com/38572823/194652811-088b4dd5-0247-436c-a3ef-21414044a60f.png" width = "500" height = "250">
+
+8-function IFS fractaland it's network-predicted reconstruction:
+
+<img src = "https://user-images.githubusercontent.com/38572823/194652790-e1becbea-05d3-44ef-8414-3e38bcbf7235.png" width = "500" height = "250">
 
 The results were published in:  
+L. Graham and M. Demers. Applying Neural Networks to a Fractal Inverse Problem. In AMMCS 2019 conference proceedings.
